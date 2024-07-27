@@ -5,6 +5,8 @@
 #include "riscv.h"
 #include "defs.h"
 #include "fs.h"
+#include "spinlock.h"
+#include "proc.h"
 
 /*
  * the kernel's page table.
@@ -184,10 +186,14 @@ uvmunmap(pagetable_t pagetable, uint64 va, uint64 npages, int do_free)
     panic("uvmunmap: not aligned");
 
   for(a = va; a < va + npages*PGSIZE; a += PGSIZE){
-    if((pte = walk(pagetable, a, 0)) == 0)
-      panic("uvmunmap: walk");
-    if((*pte & PTE_V) == 0)
-      panic("uvmunmap: not mapped");
+    if((pte = walk(pagetable, a, 0)) == 0) {
+      // panic("uvmunmap: walk");
+      continue; // we're now doing lazy page allocation
+    }
+    if((*pte & PTE_V) == 0) {
+      // panic("uvmunmap: not mapped");
+      continue; // we're now doing lazy page allocation
+    }
     if(PTE_FLAGS(*pte) == PTE_V)
       panic("uvmunmap: not a leaf");
     if(do_free){
@@ -448,4 +454,29 @@ copyinstr(pagetable_t pagetable, char *dst, uint64 srcva, uint64 max)
   } else {
     return -1;
   }
+}
+
+// Allocate a page and create a mapping for va
+// va doesn't need to be page-alinged
+// returns 0 on failure and 1 on success
+uint64
+pagealloc(struct proc *p, uint64 va) {
+  char* mem = kalloc();
+
+  if (mem == 0) {
+    printf("page fault: kalloc() ran out of memory");
+    return 0;
+  }
+
+  memset(mem, 0, PGSIZE);
+
+  // mappages() expects aligned va and pa
+  va = PGROUNDDOWN(va);
+  uint64 pa = (uint64) mem;
+  if (mappages(p->pagetable, va, PGSIZE, pa, PTE_U|PTE_R|PTE_W|PTE_X) != 0) {
+    kfree(mem);
+    return 0;
+  }
+
+  return 1;
 }

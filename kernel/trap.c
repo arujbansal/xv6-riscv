@@ -67,6 +67,14 @@ usertrap(void)
     syscall();
   } else if((which_dev = devintr()) != 0){
     // ok
+  } else if(r_scause() == 13 || r_scause() == 15) {
+    // scause 13 is a load page fault
+    // scause15 is a store/atomic memory operation page fault
+    // in either case, assign a physical page to virtual address $stval
+
+    if (pagealloc(p, r_stval()) == 0) {
+      setkilled(p);
+    }
   } else {
     printf("usertrap(): unexpected scause 0x%lx pid=%d\n", r_scause(), p->pid);
     printf("            sepc=0x%lx stval=0x%lx\n", r_sepc(), r_stval());

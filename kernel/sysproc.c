@@ -43,8 +43,11 @@ sys_sbrk(void)
 
   argint(0, &n);
   addr = myproc()->sz;
-  if(growproc(n) < 0)
-    return -1;
+
+  // only update new size
+  // page will be lazily allocated on page fault
+  myproc()->sz += n;
+  
   return addr;
 }
 
