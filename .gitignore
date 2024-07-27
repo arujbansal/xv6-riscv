@@ -19,3 +19,4 @@ user/usys.S
 gradelib.py
 grade-lab-util
 grade_lab_lazy.py
+.DS_Store
