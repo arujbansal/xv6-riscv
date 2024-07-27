@@ -18,6 +18,7 @@ user/usys.S
 .vscode/
 gradelib.py
 grade-lab-util
+grade-lab-syscall
 grade_lab_lazy.py
 .DS_Store
-xv6.out
+*xv6.out*
