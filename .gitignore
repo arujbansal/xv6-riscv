@@ -16,3 +16,6 @@ kernel/kernel
 user/usys.S
 .gdbinit
 .vscode/
+gradelib.py
+grade-lab-util
+grade_lab_lazy.py
