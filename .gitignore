@@ -22,4 +22,3 @@ grade-lab-syscall
 grade_lab_lazy.py
 .DS_Store
 *xv6.out*
-user/lazytests.c
