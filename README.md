@@ -4,7 +4,7 @@ This is my attempt at self-learning operating systems by implementing new featur
 In addition to the xv6 source code, [Operating Systems: Three Easy Pieces (OSTEP)](https://pages.cs.wisc.edu/~remzi/OSTEP/) is an excellent free book for learning bigger-picture ideas about operating system design.
 
 ## Added Features
-This list will be updated as I implement new features.
+This list will be updated as I implement new features. Implementation is under the "hacking" branch unless specified otherwise.
 * Implemented system call tracing for programs. 
 * Implemented lazy physical memory allocation for virtual pages in a process's user heap.
 
