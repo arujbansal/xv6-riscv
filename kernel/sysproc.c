@@ -40,13 +40,23 @@ sys_sbrk(void)
 {
   uint64 addr;
   int n;
+  struct proc *p = myproc();
 
   argint(0, &n);
-  addr = myproc()->sz;
+  addr = p->sz;
 
-  // only update new size
+  // only update new size, don't allocate page here
   // page will be lazily allocated on page fault
-  myproc()->sz += n;
+  uint64 new_sz = p->sz + n;
+  if (new_sz < 0 || new_sz >= MAXVA) {
+    return -1;
+  }
+
+  p->sz = new_sz;
+
+  if (n < 0) {
+    uvmdealloc(p->pagetable, addr, p->sz);
+  }
   
   return addr;
 }

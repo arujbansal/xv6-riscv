@@ -117,13 +117,18 @@ walkaddr(pagetable_t pagetable, uint64 va)
     return 0;
 
   pte = walk(pagetable, va, 0);
-  if(pte == 0)
-    return 0;
-  if((*pte & PTE_V) == 0)
-    return 0;
-  if((*pte & PTE_U) == 0)
-    return 0;
+
+  if (pte == 0 || ((*pte & PTE_V) == 0) || ((*pte & PTE_U) == 0)) {
+    if (pagealloc(myproc(), va) == 0) {
+      // printf("%lu\n", (uint64) pte);
+      return 0;
+    }
+    // printf("%lu\n", (uint64) pte);
+    pte = walk(pagetable, va, 0);
+  }
+  
   pa = PTE2PA(*pte);
+
   return pa;
 }
 
@@ -162,8 +167,8 @@ mappages(pagetable_t pagetable, uint64 va, uint64 size, uint64 pa, int perm)
   for(;;){
     if((pte = walk(pagetable, a, 1)) == 0)
       return -1;
-    if(*pte & PTE_V)
-      panic("mappages: remap");
+    // if(*pte & PTE_V)
+    //   panic("mappages: remap");
     *pte = PA2PTE(pa) | perm | PTE_V;
     if(a == last)
       break;
@@ -325,9 +330,13 @@ uvmcopy(pagetable_t old, pagetable_t new, uint64 sz)
 
   for(i = 0; i < sz; i += PGSIZE){
     if((pte = walk(old, i, 0)) == 0)
-      panic("uvmcopy: pte should exist");
+      // panic("uvmcopy: pte should exist");
+      // this is ok,  we're now doing lazy page allocation
+      continue;
     if((*pte & PTE_V) == 0)
-      panic("uvmcopy: page not present");
+      // panic("uvmcopy: page not present");
+      // this is ok, we're now doing lazy page allocation
+      continue;
     pa = PTE2PA(*pte);
     flags = PTE_FLAGS(*pte);
     if((mem = kalloc()) == 0)
@@ -369,16 +378,26 @@ copyout(pagetable_t pagetable, uint64 dstva, char *src, uint64 len)
 
   while(len > 0){
     va0 = PGROUNDDOWN(dstva);
-    if(va0 >= MAXVA)
+    if(va0 >= MAXVA) {
       return -1;
+    }
+    
+    if (walkaddr(pagetable, va0) == 0) {
+      return -1;
+    }
+
     pte = walk(pagetable, va0, 0);
     if(pte == 0 || (*pte & PTE_V) == 0 || (*pte & PTE_U) == 0 ||
-       (*pte & PTE_W) == 0)
+       (*pte & PTE_W) == 0) {
       return -1;
+    }
+
     pa0 = PTE2PA(*pte);
+    
     n = PGSIZE - (dstva - va0);
     if(n > len)
       n = len;
+
     memmove((void *)(pa0 + (dstva - va0)), src, n);
 
     len -= n;
@@ -456,27 +475,33 @@ copyinstr(pagetable_t pagetable, char *dst, uint64 srcva, uint64 max)
   }
 }
 
-// Allocate a page and create a mapping for va
+// Allocate a page in user's virtual heap
+// and create a mapping for va.
 // va doesn't need to be page-alinged
-// returns 0 on failure and 1 on success
+// returns 0 on failure and pa on success
 uint64
 pagealloc(struct proc *p, uint64 va) {
+  // va higher than current allocation not allowed
+  // va below user stack not allowed
+  if ((va >= p->sz) || (va < PGROUNDDOWN(p->trapframe->sp))) {
+    return 0;
+  }
+
   char* mem = kalloc();
 
   if (mem == 0) {
-    printf("page fault: kalloc() ran out of memory");
     return 0;
   }
 
   memset(mem, 0, PGSIZE);
 
   // mappages() expects aligned va and pa
-  va = PGROUNDDOWN(va);
+  uint64 aligned_va = PGROUNDDOWN(va);
   uint64 pa = (uint64) mem;
-  if (mappages(p->pagetable, va, PGSIZE, pa, PTE_U|PTE_R|PTE_W|PTE_X) != 0) {
+  if (mappages(p->pagetable, aligned_va, PGSIZE, pa, PTE_U|PTE_R|PTE_W|PTE_X) != 0) {
     kfree(mem);
     return 0;
   }
 
-  return 1;
+  return (uint64) mem;
 }
