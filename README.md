@@ -1,10 +1,10 @@
 # About
-This is my attempt at self-learning operating systems by implementing new features for xv6. All new implementation is my own work (unless specified otherwise), done in my own time and not for any academic course. When test files have been borrowed from publicly available xv6 labs, credit has been given through the commit history.
+This is my attempt at self-learning operating systems by implementing new features for xv6. All new implementation is my own work, done in my own time and not for any academic course. When test files have been borrowed from publicly available xv6 labs, credit has been given through the commit history.
 
 In addition to the xv6 source code, [Operating Systems: Three Easy Pieces (OSTEP)](https://pages.cs.wisc.edu/~remzi/OSTEP/) is an excellent free book for learning bigger-picture ideas about operating system design.
 
 ## Added Features
-This list will be updated as I implement new features. Implementation is under the "main" branch unless specified otherwise.
+This list will be updated as I implement new features. Implementation is under the "hacking" branch unless specified otherwise.
 * Implemented system call tracing for programs. 
 * Implemented lazy physical memory allocation for virtual pages in a process's user heap.
 
