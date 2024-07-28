@@ -141,6 +141,7 @@ UPROGS=\
 	$U/_zombie\
 	$U/_sleep\
 	$U/_trace\
+	$U/_lazytests\
 
 fs.img: mkfs/mkfs README $(UPROGS)
 	mkfs/mkfs fs.img README $(UPROGS)
